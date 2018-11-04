@@ -7,8 +7,8 @@ def sarsaLambda(l,data):
 	#Sarsa Lambda algorithm for estimating Bellman Equation
 
 	#Initialize lambda, alpha and gamma (arbitrary for now)
-	a = 0.01	#alpha
-	g = 0.8		#gamma
+	alpha = 0.1		#alpha
+	gamma = 0.5		#gamma
 
 	#Initialize Q (Expected Rewards) and N ([s,a] visit counts) dictionaries
 	Q = {}
@@ -17,12 +17,12 @@ def sarsaLambda(l,data):
 	#Loop through each row in the data
 	for t in range(data.shape[0]):
 
-		if t == 0 or data.s[t] != sp:
+		if t == 0:
 			s = data.s[t]		#get state
 			a = data.a[t]		#get action
 			r = data.r[t] 		#get reward
 			sp = data.sp[t] 	#get next state
-			N = {}
+			N.clear()
 			continue
 
 		sKey = str(s) + ',' + str(a)
@@ -39,13 +39,16 @@ def sarsaLambda(l,data):
 		if spKey not in Q:
 			Q[spKey] = 0
 
-		delta = r + g*Q[spKey]-Q[sKey] #calculate delta
+		delta = r + gamma*Q[spKey] - Q[sKey] #calculate delta
 
 		#Smear reward through state-action space
 		#	If s-a pair has no counts, update would be 0
 		for idx in N:
-			Q[idx] += a*delta*N[idx]
-			N[idx] = g*l*N[idx]
+			Q[idx] += alpha*delta*N[idx]
+			N[idx] = gamma*l*N[idx]
+
+		if data.s[t] != sp:
+			N.clear()
 
 		s = data.s[t]		#get state
 		a = data.a[t]		#get action
@@ -70,7 +73,6 @@ def extractPolicy(filename,nS,nA,learnedQ):
 
 def compute(inFile,outFile):
 	csvData = pd.read_csv(inFile)                      #read in data from .csv file
-	print(csvData.shape[0])
 
 	if inFile == "small.csv":
 		l = 0.95
@@ -107,5 +109,5 @@ def main():
     compute(inputfilename, outputfilename)
 
 if __name__ == '__main__':
-    inputs = ["small.csv","small.policy"]
+    inputs = ["large.csv","large.policy"]
     main()
